@@ -1,0 +1,41 @@
+name: Multi-Cloud Secure IaC Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform-aws:
+    name: 🚀 Deploy AWS Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🧪 Run Checkov - IaC Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/aws
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: 🌍 Terraform Init
+        run: terraform init
+        working-directory: terraform/aws
+
+      - name: 📊 Terraform Plan
+        run: terraform plan
+        working-directory: terraform/aws
+
+      # Uncomment below to enable auto-deploy (we'll set up approval later)
+      # - name: 🚀 Terraform Apply
+      #   run: terraform apply -auto-approve
+      #   working-directory: terraform/aws
