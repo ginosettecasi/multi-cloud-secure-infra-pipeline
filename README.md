@@ -43,3 +43,8 @@ Designed to showcase end-to-end security automation and infrastructure as code f
 
 ## 📁 Project Structure
 
+---
+
+### 📡 Pipeline Status
+
+✅ Pipeline is live and automatically runs Terraform security scans and deployments to AWS.
