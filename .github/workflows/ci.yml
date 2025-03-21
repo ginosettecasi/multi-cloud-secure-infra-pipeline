@@ -33,7 +33,14 @@ jobs:
         run: terraform plan -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
         working-directory: terraform/aws
 
-      # Uncomment this when ready to auto-deploy
-      # - name: 🚀 Terraform Apply
-      #   run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
-      #   working-directory: terraform/aws
+      - name: 🚀 Terraform Apply (with Approval)
+        if: github.ref == 'refs/heads/main'
+        uses: hashicorp/setup-terraform@v2
+        with:
+              terraform_version: 1.5.7
+
+      - name: 🚀 Apply Terraform
+        run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
+        working-directory: terraform/aws
+        environment: production
+
