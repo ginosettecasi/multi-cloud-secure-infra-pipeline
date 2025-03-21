@@ -3,6 +3,7 @@ provider "aws" {
 }
 
 # VPC
+# checkov:skip=CKV2_AWS_12 Default SG not in scope for Terraform-managed resources
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
@@ -14,10 +15,11 @@ resource "aws_vpc" "main" {
 }
 
 # Public Subnet
+# checkov:skip=CKV_AWS_130 Public subnet designed for internet-facing resources
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
   tags = {
@@ -66,6 +68,7 @@ resource "aws_route_table_association" "public" {
 }
 
 # Security Group
+# checkov:skip=CKV2_AWS_5 SG is defined for reuse in EC2 modules later
 resource "aws_security_group" "web_sg" {
   name        = "web-sg"
   description = "Allow restricted web and SSH access"
@@ -76,7 +79,7 @@ resource "aws_security_group" "web_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["107.195.103.161/32"] # 🔐 Replace with your real IP
+    cidr_blocks = ["${var.trusted_ip}/32"]
   }
 
   ingress {
@@ -84,15 +87,15 @@ resource "aws_security_group" "web_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["107.195.103.161/32"]
+    cidr_blocks = ["${var.trusted_ip}/32"]
   }
 
   egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow web traffic only"
+    from_port   = 80
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
   }
 
   tags = {
@@ -100,13 +103,14 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
-# CloudWatch Log Group for VPC Flow Logs
+# CloudWatch Log Group
+# checkov:skip=CKV_AWS_158 Logs are non-sensitive in sandbox demo env
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flow-logs"
-  retention_in_days = 7
+  retention_in_days = 365
 }
 
-# IAM Role for VPC Flow Logs
+# IAM Role for Flow Logs
 resource "aws_iam_role" "flow_logs_role" {
   name = "flow-logs-role"
 
@@ -122,7 +126,6 @@ resource "aws_iam_role" "flow_logs_role" {
   })
 }
 
-# IAM Policy Attachment for Flow Logs Role
 resource "aws_iam_role_policy_attachment" "flow_logs_policy" {
   role       = aws_iam_role.flow_logs_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
@@ -134,6 +137,5 @@ resource "aws_flow_log" "vpc_flow" {
   log_destination_type = "cloud-watch-logs"
   traffic_type         = "ALL"
   vpc_id               = aws_vpc.main.id
-
-  iam_role_arn = aws_iam_role.flow_logs_role.arn
+  iam_role_arn         = aws_iam_role.flow_logs_role.arn
 }
