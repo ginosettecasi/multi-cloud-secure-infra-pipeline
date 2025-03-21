@@ -68,8 +68,38 @@ resource "aws_route_table_association" "public" {
 # Security Group
 resource "aws_security_group" "web_sg" {
   name        = "web-sg"
-  description = "Allow SSH and HTTP"
+  description = "Allow restricted web and SSH access"
   vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow SSH from trusted IP"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["107.195.103.161/32"] # <- Replace with IP
+  }
+
+  ingress {
+    description = "Allow HTTP from trusted IP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["107.195.103.161/32"] # <- Replace with IP
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "web-sg"
+  }
+}
+
 
   ingress {
     description = "SSH"
