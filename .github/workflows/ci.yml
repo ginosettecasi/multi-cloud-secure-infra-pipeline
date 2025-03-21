@@ -10,6 +10,7 @@ jobs:
   terraform-aws:
     name: 🚀 Deploy AWS Infrastructure
     runs-on: ubuntu-latest
+    environment: production  # ✅ <--- move it here
 
     steps:
       - name: 📥 Checkout code
@@ -33,14 +34,6 @@ jobs:
         run: terraform plan -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
         working-directory: terraform/aws
 
-      - name: 🚀 Terraform Apply (with Approval)
-        if: github.ref == 'refs/heads/main'
-        uses: hashicorp/setup-terraform@v2
-        with:
-              terraform_version: 1.5.7
-
-      - name: 🚀 Apply Terraform
+      - name: 🚀 Terraform Apply
         run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
         working-directory: terraform/aws
-        environment: production
-
