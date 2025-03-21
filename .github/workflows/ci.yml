@@ -2,11 +2,9 @@ name: Multi-Cloud Secure IaC Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   terraform-aws:
@@ -35,9 +33,7 @@ jobs:
         run: terraform plan -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
         working-directory: terraform/aws
 
-
-      # Uncomment below to enable auto-deploy (we'll set up approval later)
-      - name: 🚀 Terraform Apply
-        run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
-        working-directory: terraform/aws
-
+      # Uncomment this when ready to auto-deploy
+      # - name: 🚀 Terraform Apply
+      #   run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
+      #   working-directory: terraform/aws
