@@ -10,7 +10,7 @@ jobs:
   terraform-aws:
     name: 🚀 Deploy AWS Infrastructure
     runs-on: ubuntu-latest
-    environment: production  # ✅ <--- move it here
+    environment: production
 
     steps:
       - name: 📥 Checkout code
@@ -20,6 +20,14 @@ jobs:
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform/aws
+
+      - name: 🧪 Run Snyk IaC Scan
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          file: terraform/aws
+          args: --severity-threshold=medium --sarif-file-output=snyk.sarif --json-file-output=snyk.json
 
       - name: 🔧 Setup Terraform
         uses: hashicorp/setup-terraform@v2
