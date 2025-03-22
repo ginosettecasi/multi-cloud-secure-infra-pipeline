@@ -4,7 +4,7 @@ provider "aws" {
 
 # Use random integer to vary subnet range on each deploy
 resource "random_integer" "cidr_offset" {
-  min = 10
+  min = 50
   max = 250
 }
 
