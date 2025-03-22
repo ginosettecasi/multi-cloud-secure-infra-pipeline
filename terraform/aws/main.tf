@@ -7,13 +7,20 @@ resource "random_string" "suffix" {
   special = false
 }
 
+# ✅ Use existing VPC passed securely via Secrets
 data "aws_vpc" "main" {
   id = var.vpc_id
 }
 
+# Dynamically offset CIDRs using unique suffix
+locals {
+  public_cidr  = "10.0.${random_string.suffix.result}.0/24"
+  private_cidr = "10.0.${random_string.suffix.result + 1}.0/24"
+}
+
 resource "aws_subnet" "public" {
   vpc_id                  = data.aws_vpc.main.id
-  cidr_block              = "10.0.11.${random_string.suffix.result}/28"
+  cidr_block              = local.public_cidr
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
@@ -24,7 +31,7 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   vpc_id            = data.aws_vpc.main.id
-  cidr_block        = "10.0.12.${random_string.suffix.result}/28"
+  cidr_block        = local.private_cidr
   availability_zone = "us-east-1a"
 
   tags = {
