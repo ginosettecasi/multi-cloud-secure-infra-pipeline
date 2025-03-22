@@ -16,6 +16,9 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
 
+      - name: 📁 Ensure reports folder exists
+        run: mkdir -p terraform/aws/reports
+
       - name: 🧪 Run Checkov - IaC Security Scan
         uses: bridgecrewio/checkov-action@master
         with:
@@ -73,10 +76,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin security-reports || true
-          git checkout security-reports || git checkout -b security-reports
+          git fetch origin
+          if git show-ref --quiet refs/heads/security-reports; then
+            git checkout security-reports
+          else
+            git checkout --orphan security-reports
+            git reset --hard
+          fi
           mkdir -p reports
-          cp terraform/aws/reports/* reports/
+          cp -r terraform/aws/reports/* reports/ || echo "No reports found to copy"
           git add reports/
           git commit -m "🔐 Add latest security scan reports" || echo "No changes to commit"
           git push origin security-reports
