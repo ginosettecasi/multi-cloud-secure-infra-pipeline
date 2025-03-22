@@ -20,6 +20,8 @@ jobs:
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform/aws
+          output_format: sarif
+          output_file_path: reports/checkov.sarif
         continue-on-error: true
 
       - name: 🧪 Run Snyk IaC Scan
@@ -28,43 +30,18 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           file: terraform/aws
-          args: --severity-threshold=medium --sarif-file-output=snyk.sarif --json-file-output=snyk.json
+          args: >-
+            --severity-threshold=medium
+            --sarif-file-output=reports/snyk.sarif
+            --json-file-output=reports/snyk.json
         continue-on-error: true
 
       - name: 🧪 Run tfsec - Deep IaC Analysis
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working_directory: terraform/aws
-          additional_args: --format sarif --out tfsec.sarif
+          additional_args: --format sarif --out reports/tfsec.sarif
         continue-on-error: true
-
-      - name: 📦 Upload Snyk Report JSON
-        uses: actions/upload-artifact@8f45eaf32fdd8e66b1c6392c9f35a4f27c2f8c5a
-        with:
-          name: snyk_report_json
-          path: snyk.json
-        if: always()
-
-      - name: 📦 Upload Snyk Report SARIF
-        uses: actions/upload-artifact@8f45eaf32fdd8e66b1c6392c9f35a4f27c2f8c5a
-        with:
-          name: snyk_report_sarif
-          path: snyk.sarif
-        if: always()
-
-      - name: 📦 Upload Tfsec Report
-        uses: actions/upload-artifact@8f45eaf32fdd8e66b1c6392c9f35a4f27c2f8c5a
-        with:
-          name: tfsec_report
-          path: tfsec.sarif
-        if: always()
-
-      - name: 📦 Upload Checkov Report
-        uses: actions/upload-artifact@8f45eaf32fdd8e66b1c6392c9f35a4f27c2f8c5a
-        with:
-          name: checkov_report
-          path: checkov.sarif
-        if: always()
 
       - name: 🔧 Setup Terraform
         uses: hashicorp/setup-terraform@v2
