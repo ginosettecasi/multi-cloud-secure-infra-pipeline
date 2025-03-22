@@ -1,6 +1,6 @@
 # 🌐 Multi-Cloud Secure Infrastructure Pipeline with Terraform & GitHub Actions
 
-This project demonstrates a fully automated **DevSecOps pipeline** for provisioning secure cloud infrastructure across **AWS** and **Azure** using **Terraform**, **GitHub Actions**, **Checkov**, and **Snyk**.
+This project demonstrates a fully automated **DevSecOps pipeline** for provisioning secure cloud infrastructure across **AWS** and (future) Azure using **Terraform**, **GitHub Actions**, **Checkov**, and **Snyk**.
 
 Everything is deployed automatically from GitHub — no local CLI required.
 
@@ -25,7 +25,7 @@ Designed to showcase end-to-end security automation and infrastructure as code f
 | Terraform      | Provision secure AWS & Azure infrastructure   |
 | GitHub Actions | CI/CD automation                              |
 | Checkov        | IaC security linting                          |
-| Snyk           | Dependency scanning                           |
+| Snyk           | Dependency + IaC scanning                     |
 | AWS & Azure    | Multi-cloud environments (Free Tier)          |
 
 ---
@@ -33,8 +33,9 @@ Designed to showcase end-to-end security automation and infrastructure as code f
 ## 🚀 Features
 
 - Secure-by-default infrastructure (least privilege IAM, NSGs, VPC)
-- Terraform IaC for **AWS VPC**, **Azure Resource Group**, and **Security Groups**
+- Terraform IaC for **AWS VPC**, **Security Groups**, **EC2**
 - Pre-merge checks using **Checkov**
+- Security scanning with **Snyk**
 - GitHub Actions pipeline with **Terraform plan/apply**
 - Secrets managed via GitHub Secrets
 - Optional approval gates for production deployment
@@ -43,14 +44,39 @@ Designed to showcase end-to-end security automation and infrastructure as code f
 
 ## 📁 Project Structure
 
-multi-cloud-secure-infra-pipeline/ ├── .github/workflows/ci.yml # GitHub Actions pipeline ├── terraform/aws/main.tf # AWS Terraform IaC ├── terraform/aws/variables.tf # Terraform variables ├── .pre-commit-config.yaml # Linting automation ├── snyk.yml # Optional: Snyk CLI scanning └── README.md # Project overview
-
+multi-cloud-secure-infra-pipeline/ ├── .github/workflows/ci.yml # GitHub Actions pipeline ├── terraform/aws/main.tf # AWS Terraform (VPC, SG, flow logs) ├── terraform/aws/ec2.tf # AWS EC2 instance attached to SG ├── terraform/aws/variables.tf # Terraform variables ├── .pre-commit-config.yaml # Linting automation (optional) ├── snyk.yml # Optional: Snyk CLI scanning └── README.md # Project documentation
 
 ---
 
 ## 📡 Pipeline Status
 
-✅ Pipeline is live and automatically runs Terraform security scans and deployments to AWS.
+✅ Pipeline is live and automatically runs:
+
+- Checkov linting
+- Snyk IaC scanning
+- Terraform Plan / Apply (with approval)
+- Infrastructure deployment to AWS
+
+---
+
+## 🧩 Step 4: Snyk IaC Integration
+
+To strengthen security posture and showcase real-world AppSec integration, this project adds **Snyk IaC scanning** directly into GitHub Actions.
+
+### 🔍 What Snyk Scans For:
+- Misconfigured security rules
+- Privilege escalation risks
+- Open ingress/egress patterns
+- Missing encryption or logging
+- Cloud infrastructure risks in Terraform
+
+### 🧰 Technical Details:
+- **Runs before Terraform apply**
+- Configured to **fail on medium or higher issues**
+- Outputs both **SARIF** (for GitHub Advanced Security) and **JSON** logs
+- Authenticated via GitHub Secrets using `SNYK_TOKEN`
+
+This mirrors how engineering teams catch issues **before deployment**, ensuring compliance and security-by-default.
 
 ---
 
@@ -60,7 +86,7 @@ This project was built to align with real-world **DevSecOps principles**, not ju
 
 ### ✅ How the Pipeline Remediates High-Risk Issues
 
-The GitHub Actions pipeline integrates **Checkov**, which performs security analysis on Terraform code before deployment. During development, the pipeline identified several high-risk misconfigurations, including:
+The GitHub Actions pipeline integrates **Checkov** and **Snyk**, which perform deep static analysis of Terraform code. During development, the pipeline identified several high-risk misconfigurations, including:
 
 - Security Groups allowing SSH and HTTP from `0.0.0.0/0`
 - Egress rules that allowed all traffic on all ports
@@ -82,15 +108,17 @@ Additionally, non-critical findings (e.g., KMS encryption for low-sensitivity lo
 - 📝 Document accepted risks  
 - 🔐 Keep everything versioned and auditable
 
-### 🧠 Additional Highlights
+---
 
-- Security scanning is embedded directly into CI/CD — no manual steps
-- High-risk findings are blocked automatically before apply
-- Remediation decisions are **transparent, documented, and intentional**
-- Sensitive inputs like IP addresses are stored securely in **GitHub Secrets**
+## 🧠 Interview-Ready Highlights
 
-This approach mirrors how real security-focused teams operate — blending **automation, security enforcement, and risk context** to deliver reliable, secure cloud infrastructure.
+- ✅ GitHub Actions-based secure CI/CD with no local dependency
+- 🔐 Snyk + Checkov catch risks pre-deployment
+- ☁️ AWS infra deployed using Terraform (modular, scalable)
+- 🧩 Security Groups are **actually used** by deployed EC2
+- 👥 IP restrictions are secured using GitHub Secrets
+- 📦 All IaC is production-grade and ready to scale to Azure or GCP
 
 ---
 
-**Created by [Gino A. Settecasi](https://ginosettecasi.github.io)** — Portfolio project for DevSecOps
+**Created by [Gino A. Settecasi](https://ginosettecasi.github.io)** — Portfolio project for DevSecOps Engineer
