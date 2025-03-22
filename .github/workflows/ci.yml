@@ -29,6 +29,12 @@ jobs:
           file: terraform/aws
           args: --severity-threshold=medium --sarif-file-output=snyk.sarif --json-file-output=snyk.json
 
+      - name: 🧪 Run tfsec - Deep IaC Analysis
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: terraform/aws
+          additional_args: --format sarif --out tfsec.sarif
+
       - name: 🔧 Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
