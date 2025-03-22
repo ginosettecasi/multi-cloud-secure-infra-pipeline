@@ -1,9 +1,9 @@
 variable "trusted_ip" {
-  description = "The trusted IP address allowed to access SSH/HTTP"
+  description = "Trusted IP for SSH and HTTP"
   type        = string
 }
 
 variable "vpc_id" {
-  description = "The ID of the existing VPC to use"
+  description = "ID of the existing VPC to deploy into"
   type        = string
 }
