@@ -2,23 +2,22 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "random_string" "suffix" {
-  length  = 2
-  special = false
-  upper   = false
+# Use random integer to vary subnet range on each deploy
+resource "random_integer" "cidr_offset" {
+  min = 10
+  max = 250
 }
 
-# Calculate last octet offset using ASCII value (e.g., "a" = 97 → 1)
-locals {
-  offset = floor((ascii(code(random_string.suffix.result)) - 96) * 2)
-  public_cidr  = "10.0.${local.offset}.0/24"
-  private_cidr = "10.0.${local.offset + 1}.0/24"
+resource "random_string" "suffix" {
+  length  = 4
+  special = false
+  upper   = false
 }
 
 # Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = var.vpc_id
-  cidr_block              = local.public_cidr
+  cidr_block              = "10.0.${random_integer.cidr_offset.result}.0/24"
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
@@ -30,7 +29,7 @@ resource "aws_subnet" "public" {
 # Private Subnet
 resource "aws_subnet" "private" {
   vpc_id            = var.vpc_id
-  cidr_block        = local.private_cidr
+  cidr_block        = "10.0.${random_integer.cidr_offset.result + 1}.0/24"
   availability_zone = "us-east-1a"
 
   tags = {
@@ -38,7 +37,7 @@ resource "aws_subnet" "private" {
   }
 }
 
-# Route Table (no IGW dependency)
+# Route Table (skip IGW to avoid AWS quota issues)
 resource "aws_route_table" "public" {
   vpc_id = var.vpc_id
 
