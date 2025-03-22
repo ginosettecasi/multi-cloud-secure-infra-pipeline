@@ -7,29 +7,28 @@ resource "random_string" "suffix" {
   special = false
 }
 
-# ✅ Use existing VPC passed securely via Secrets
 data "aws_vpc" "main" {
   id = var.vpc_id
 }
 
 resource "aws_subnet" "public" {
   vpc_id                  = data.aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = "10.0.11.${random_string.suffix.result}/28"
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
   tags = {
-    Name = "public-subnet"
+    Name = "public-subnet-${random_string.suffix.result}"
   }
 }
 
 resource "aws_subnet" "private" {
   vpc_id            = data.aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = "10.0.12.${random_string.suffix.result}/28"
   availability_zone = "us-east-1a"
 
   tags = {
-    Name = "private-subnet"
+    Name = "private-subnet-${random_string.suffix.result}"
   }
 }
 
@@ -37,7 +36,7 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = data.aws_vpc.main.id
 
   tags = {
-    Name = "main-igw"
+    Name = "main-igw-${random_string.suffix.result}"
   }
 }
 
@@ -50,7 +49,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "public-route-table"
+    Name = "public-route-table-${random_string.suffix.result}"
   }
 }
 
@@ -60,7 +59,7 @@ resource "aws_route_table_association" "public" {
 }
 
 resource "aws_security_group" "web_sg" {
-  name        = "web-sg"
+  name        = "web-sg-${random_string.suffix.result}"
   description = "Allow restricted web and SSH access"
   vpc_id      = data.aws_vpc.main.id
 
@@ -89,7 +88,7 @@ resource "aws_security_group" "web_sg" {
   }
 
   tags = {
-    Name = "web-sg"
+    Name = "web-sg-${random_string.suffix.result}"
   }
 }
 
