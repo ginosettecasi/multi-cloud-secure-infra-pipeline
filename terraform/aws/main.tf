@@ -7,22 +7,17 @@ resource "random_string" "suffix" {
   special = false
 }
 
-# VPC
-# checkov:skip=CKV2_AWS_12 Default SG not in scope for Terraform-managed resources
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-
-  tags = {
-    Name = "multi-cloud-vpc"
+# ✅ Use existing VPC by tag
+data "aws_vpc" "main" {
+  filter {
+    name   = "tag:Name"
+    values = ["multi-cloud-vpc"]
   }
 }
 
 # Public Subnet
-# checkov:skip=CKV_AWS_130 Public subnet designed for internet-facing resources
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
+  vpc_id                  = data.aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
@@ -34,7 +29,7 @@ resource "aws_subnet" "public" {
 
 # Private Subnet
 resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.main.id
+  vpc_id            = data.aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
   availability_zone = "us-east-1a"
 
@@ -45,7 +40,7 @@ resource "aws_subnet" "private" {
 
 # Internet Gateway
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = data.aws_vpc.main.id
 
   tags = {
     Name = "main-igw"
@@ -54,7 +49,7 @@ resource "aws_internet_gateway" "igw" {
 
 # Route Table
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = data.aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -73,11 +68,10 @@ resource "aws_route_table_association" "public" {
 }
 
 # Security Group
-# checkov:skip=CKV2_AWS_5 SG is defined for reuse in EC2 modules later
 resource "aws_security_group" "web_sg" {
   name        = "web-sg"
   description = "Allow restricted web and SSH access"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.aws_vpc.main.id
 
   ingress {
     description = "Allow SSH from trusted IP"
@@ -109,7 +103,6 @@ resource "aws_security_group" "web_sg" {
 }
 
 # CloudWatch Log Group
-# checkov:skip=CKV_AWS_158 Logs are non-sensitive in sandbox demo env
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flow-logs-${random_string.suffix.result}"
   retention_in_days = 365
@@ -150,6 +143,6 @@ resource "aws_flow_log" "vpc_flow" {
   log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
   log_destination_type = "cloud-watch-logs"
   traffic_type         = "ALL"
-  vpc_id               = aws_vpc.main.id
+  vpc_id               = data.aws_vpc.main.id
   iam_role_arn         = aws_iam_role.flow_logs_role.arn
 }
