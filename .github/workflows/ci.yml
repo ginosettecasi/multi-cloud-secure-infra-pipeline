@@ -16,7 +16,7 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-            - name: 🧪 Run Checkov - IaC Security Scan
+      - name: 🧪 Run Checkov - IaC Security Scan
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform/aws
