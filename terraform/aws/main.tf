@@ -2,6 +2,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
+resource "random_string" "suffix" {
+  length  = 4
+  special = false
+}
+
 # VPC
 # checkov:skip=CKV2_AWS_12 Default SG not in scope for Terraform-managed resources
 resource "aws_vpc" "main" {
@@ -106,7 +111,7 @@ resource "aws_security_group" "web_sg" {
 # CloudWatch Log Group
 # checkov:skip=CKV_AWS_158 Logs are non-sensitive in sandbox demo env
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name              = "/aws/vpc/flow-logs"
+  name              = "/aws/vpc/flow-logs-${random_string.suffix.result}"
   retention_in_days = 365
 
   lifecycle {
@@ -116,13 +121,13 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
 
 # IAM Role for Flow Logs
 resource "aws_iam_role" "flow_logs_role" {
-  name = "flow-logs-role"
+  name = "flow-logs-role-${random_string.suffix.result}"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
       Principal = {
         Service = "vpc-flow-logs.amazonaws.com"
       }
