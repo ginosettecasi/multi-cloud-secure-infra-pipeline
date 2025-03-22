@@ -7,20 +7,11 @@ resource "random_string" "suffix" {
   special = false
 }
 
-# ✅ Use existing VPC by tag and CIDR
+# ✅ Use existing VPC passed securely via Secrets
 data "aws_vpc" "main" {
-  filter {
-    name   = "tag:Name"
-    values = ["multi-cloud-vpc"]
-  }
-
-  filter {
-    name   = "cidr-block"
-    values = ["10.0.0.0/16"] # 🔁 Replace with correct CIDR if different
-  }
+  id = var.vpc_id
 }
 
-# Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = data.aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
@@ -32,7 +23,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Private Subnet
 resource "aws_subnet" "private" {
   vpc_id            = data.aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
@@ -43,7 +33,6 @@ resource "aws_subnet" "private" {
   }
 }
 
-# Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = data.aws_vpc.main.id
 
@@ -52,7 +41,6 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# Route Table
 resource "aws_route_table" "public" {
   vpc_id = data.aws_vpc.main.id
 
@@ -66,13 +54,11 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Associate Public Subnet with Route Table
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
 
-# Security Group
 resource "aws_security_group" "web_sg" {
   name        = "web-sg"
   description = "Allow restricted web and SSH access"
@@ -107,7 +93,6 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
-# CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flow-logs-${random_string.suffix.result}"
   retention_in_days = 365
@@ -117,7 +102,6 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   }
 }
 
-# IAM Role for Flow Logs
 resource "aws_iam_role" "flow_logs_role" {
   name = "flow-logs-role-${random_string.suffix.result}"
 
@@ -137,13 +121,11 @@ resource "aws_iam_role" "flow_logs_role" {
   }
 }
 
-# IAM Policy Attachment
 resource "aws_iam_role_policy_attachment" "flow_logs_policy" {
   role       = aws_iam_role.flow_logs_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
 
-# VPC Flow Logs
 resource "aws_flow_log" "vpc_flow" {
   log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
   log_destination_type = "cloud-watch-logs"
