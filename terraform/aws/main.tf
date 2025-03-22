@@ -25,11 +25,9 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# Choose IGW ID dynamically
+# ✅ Fix: Correct inline conditional assignment
 locals {
-  selected_igw_id = length(data.aws_internet_gateways.existing.ids) > 0 ?
-    data.aws_internet_gateways.existing.ids[0] :
-    aws_internet_gateway.igw[0].id
+  selected_igw_id = length(data.aws_internet_gateways.existing.ids) > 0 ? data.aws_internet_gateways.existing.ids[0] : aws_internet_gateway.igw[0].id
 }
 
 # Public Subnet
