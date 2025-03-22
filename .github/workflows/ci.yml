@@ -10,7 +10,7 @@ jobs:
   terraform-aws:
     name: 🚀 Deploy AWS Infrastructure
     runs-on: ubuntu-latest
-    environment: production  # ✅ Correct placement for manual approval gate
+    environment: production
 
     steps:
       - name: 📥 Checkout code
