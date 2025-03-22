@@ -46,11 +46,20 @@ jobs:
       - name: 🌍 Terraform Init
         run: terraform init
         working-directory: terraform/aws
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 📊 Terraform Plan
         run: terraform plan -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
         working-directory: terraform/aws
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 🚀 Terraform Apply
         run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
         working-directory: terraform/aws
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
