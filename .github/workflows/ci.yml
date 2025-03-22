@@ -16,15 +16,12 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: 📁 Create reports directory
-        run: mkdir -p reports
-
       - name: 🧪 Run Checkov - IaC Security Scan
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform/aws
           output_format: sarif
-          output_file_path: reports/checkov.sarif
+          output_file_path: terraform/aws/reports/checkov.sarif
         continue-on-error: true
 
       - name: 🧪 Run Snyk IaC Scan
@@ -35,15 +32,15 @@ jobs:
           file: terraform/aws
           args: >-
             --severity-threshold=medium
-            --sarif-file-output=reports/snyk.sarif
-            --json-file-output=reports/snyk.json
+            --sarif-file-output=terraform/aws/reports/snyk.sarif
+            --json-file-output=terraform/aws/reports/snyk.json
         continue-on-error: true
 
       - name: 🧪 Run tfsec - Deep IaC Analysis
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working_directory: terraform/aws
-          additional_args: --format sarif --out reports/tfsec.sarif
+          additional_args: --format sarif --out terraform/aws/reports/tfsec.sarif
         continue-on-error: true
 
       - name: 🔧 Setup Terraform
@@ -71,3 +68,15 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: 🚀 Commit Reports to Branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin security-reports || true
+          git checkout security-reports || git checkout -b security-reports
+          mkdir -p reports
+          cp terraform/aws/reports/* reports/
+          git add reports/
+          git commit -m "🔐 Add latest security scan reports" || echo "No changes to commit"
+          git push origin security-reports
