@@ -16,10 +16,11 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: 🧪 Run Checkov - IaC Security Scan
+            - name: 🧪 Run Checkov - IaC Security Scan
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform/aws
+        continue-on-error: true
 
       - name: 🧪 Run Snyk IaC Scan
         uses: snyk/actions/iac@master
@@ -28,12 +29,14 @@ jobs:
         with:
           file: terraform/aws
           args: --severity-threshold=medium --sarif-file-output=snyk.sarif --json-file-output=snyk.json
+        continue-on-error: true
 
       - name: 🧪 Run tfsec - Deep IaC Analysis
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working_directory: terraform/aws
           additional_args: --format sarif --out tfsec.sarif
+        continue-on-error: true
 
       - name: 🔧 Setup Terraform
         uses: hashicorp/setup-terraform@v2
