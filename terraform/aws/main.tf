@@ -7,11 +7,16 @@ resource "random_string" "suffix" {
   special = false
 }
 
-# ✅ Use existing VPC by tag
+# ✅ Use existing VPC by tag and CIDR
 data "aws_vpc" "main" {
   filter {
     name   = "tag:Name"
     values = ["multi-cloud-vpc"]
+  }
+
+  filter {
+    name   = "cidr-block"
+    values = ["10.0.0.0/16"] # 🔁 Replace with correct CIDR if different
   }
 }
 
