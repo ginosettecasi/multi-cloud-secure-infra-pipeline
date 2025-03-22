@@ -7,6 +7,31 @@ resource "random_string" "suffix" {
   special = false
 }
 
+# Lookup existing Internet Gateway
+data "aws_internet_gateways" "existing" {
+  filter {
+    name   = "attachment.vpc-id"
+    values = [var.vpc_id]
+  }
+}
+
+# Create IGW only if one does not exist
+resource "aws_internet_gateway" "igw" {
+  count  = length(data.aws_internet_gateways.existing.ids) == 0 ? 1 : 0
+  vpc_id = var.vpc_id
+
+  tags = {
+    Name = "main-igw-${random_string.suffix.result}"
+  }
+}
+
+# Choose IGW ID dynamically
+locals {
+  selected_igw_id = length(data.aws_internet_gateways.existing.ids) > 0 ?
+    data.aws_internet_gateways.existing.ids[0] :
+    aws_internet_gateway.igw[0].id
+}
+
 # Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = var.vpc_id
@@ -30,22 +55,13 @@ resource "aws_subnet" "private" {
   }
 }
 
-# Internet Gateway
-resource "aws_internet_gateway" "igw" {
-  vpc_id = var.vpc_id
-
-  tags = {
-    Name = "main-igw-${random_string.suffix.result}"
-  }
-}
-
 # Route Table
 resource "aws_route_table" "public" {
   vpc_id = var.vpc_id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+    gateway_id = local.selected_igw_id
   }
 
   tags = {
