@@ -2,16 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-variable "trusted_ip" {
-  description = "Trusted IP for SSH and HTTP"
-  type        = string
-}
-
-variable "vpc_id" {
-  description = "Existing VPC ID to use"
-  type        = string
-}
-
 resource "random_string" "suffix" {
   length  = 4
   special = false
