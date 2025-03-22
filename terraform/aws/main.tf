@@ -2,25 +2,25 @@ provider "aws" {
   region = "us-east-1"
 }
 
+variable "trusted_ip" {
+  description = "Trusted IP for SSH and HTTP"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "Existing VPC ID to use"
+  type        = string
+}
+
 resource "random_string" "suffix" {
   length  = 4
   special = false
 }
 
-# ✅ Use existing VPC passed securely via Secrets
-data "aws_vpc" "main" {
-  id = var.vpc_id
-}
-
-# Dynamically offset CIDRs using unique suffix
-locals {
-  public_cidr  = "10.0.${random_string.suffix.result}.0/24"
-  private_cidr = "10.0.${random_string.suffix.result + 1}.0/24"
-}
-
+# Public Subnet
 resource "aws_subnet" "public" {
-  vpc_id                  = data.aws_vpc.main.id
-  cidr_block              = local.public_cidr
+  vpc_id                  = var.vpc_id
+  cidr_block              = "10.0.101.0/24"
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
@@ -29,9 +29,10 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Private Subnet
 resource "aws_subnet" "private" {
-  vpc_id            = data.aws_vpc.main.id
-  cidr_block        = local.private_cidr
+  vpc_id            = var.vpc_id
+  cidr_block        = "10.0.102.0/24"
   availability_zone = "us-east-1a"
 
   tags = {
@@ -39,16 +40,18 @@ resource "aws_subnet" "private" {
   }
 }
 
+# Internet Gateway
 resource "aws_internet_gateway" "igw" {
-  vpc_id = data.aws_vpc.main.id
+  vpc_id = var.vpc_id
 
   tags = {
     Name = "main-igw-${random_string.suffix.result}"
   }
 }
 
+# Route Table
 resource "aws_route_table" "public" {
-  vpc_id = data.aws_vpc.main.id
+  vpc_id = var.vpc_id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -60,15 +63,17 @@ resource "aws_route_table" "public" {
   }
 }
 
+# Associate Public Subnet with Route Table
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
 
+# Security Group
 resource "aws_security_group" "web_sg" {
   name        = "web-sg-${random_string.suffix.result}"
   description = "Allow restricted web and SSH access"
-  vpc_id      = data.aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "Allow SSH from trusted IP"
@@ -99,6 +104,7 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
+# CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flow-logs-${random_string.suffix.result}"
   retention_in_days = 365
@@ -108,6 +114,7 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   }
 }
 
+# IAM Role for Flow Logs
 resource "aws_iam_role" "flow_logs_role" {
   name = "flow-logs-role-${random_string.suffix.result}"
 
@@ -127,15 +134,17 @@ resource "aws_iam_role" "flow_logs_role" {
   }
 }
 
+# IAM Policy Attachment
 resource "aws_iam_role_policy_attachment" "flow_logs_policy" {
   role       = aws_iam_role.flow_logs_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
 
+# VPC Flow Logs
 resource "aws_flow_log" "vpc_flow" {
   log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
   log_destination_type = "cloud-watch-logs"
   traffic_type         = "ALL"
-  vpc_id               = data.aws_vpc.main.id
+  vpc_id               = var.vpc_id
   iam_role_arn         = aws_iam_role.flow_logs_role.arn
 }
