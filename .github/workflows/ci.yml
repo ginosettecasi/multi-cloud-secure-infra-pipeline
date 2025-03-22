@@ -72,19 +72,14 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: 🚀 Commit Reports to Branch
+      - name: 📤 Upload Reports to S3
+        if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin
-          if git show-ref --quiet refs/heads/security-reports; then
-            git checkout security-reports
-          else
-            git checkout --orphan security-reports
-            git reset --hard
-          fi
-          mkdir -p reports
-          cp -r terraform/aws/reports/* reports/ || echo "No reports found to copy"
-          git add reports/
-          git commit -m "🔐 Add latest security scan reports" || echo "No changes to commit"
-          git push origin security-reports
+          aws s3 cp terraform/aws/reports/checkov.sarif s3://${{ secrets.S3_BUCKET_NAME }}/reports/checkov.sarif || echo "Checkov report missing"
+          aws s3 cp terraform/aws/reports/snyk.sarif s3://${{ secrets.S3_BUCKET_NAME }}/reports/snyk.sarif || echo "Snyk SARIF report missing"
+          aws s3 cp terraform/aws/reports/snyk.json s3://${{ secrets.S3_BUCKET_NAME }}/reports/snyk.json || echo "Snyk JSON report missing"
+          aws s3 cp terraform/aws/reports/tfsec.sarif s3://${{ secrets.S3_BUCKET_NAME }}/reports/tfsec.sarif || echo "Tfsec report missing"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
