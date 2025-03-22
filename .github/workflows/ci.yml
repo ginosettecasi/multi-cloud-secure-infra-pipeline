@@ -10,7 +10,7 @@ jobs:
   terraform-aws:
     name: 🚀 Deploy AWS Infrastructure
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # ✅ Correct placement for manual approval gate
 
     steps:
       - name: 📥 Checkout code
@@ -63,5 +63,3 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        environment:
-          name: production
