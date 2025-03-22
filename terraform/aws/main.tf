@@ -3,14 +3,22 @@ provider "aws" {
 }
 
 resource "random_string" "suffix" {
-  length  = 4
+  length  = 2
   special = false
+  upper   = false
+}
+
+# Calculate last octet offset using ASCII value (e.g., "a" = 97 → 1)
+locals {
+  offset = floor((ascii(code(random_string.suffix.result)) - 96) * 2)
+  public_cidr  = "10.0.${local.offset}.0/24"
+  private_cidr = "10.0.${local.offset + 1}.0/24"
 }
 
 # Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = var.vpc_id
-  cidr_block              = "10.0.101.0/24"
+  cidr_block              = local.public_cidr
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
@@ -22,7 +30,7 @@ resource "aws_subnet" "public" {
 # Private Subnet
 resource "aws_subnet" "private" {
   vpc_id            = var.vpc_id
-  cidr_block        = "10.0.102.0/24"
+  cidr_block        = local.private_cidr
   availability_zone = "us-east-1a"
 
   tags = {
@@ -30,23 +38,9 @@ resource "aws_subnet" "private" {
   }
 }
 
-# Internet Gateway
-resource "aws_internet_gateway" "igw" {
-  vpc_id = var.vpc_id
-
-  tags = {
-    Name = "main-igw-${random_string.suffix.result}"
-  }
-}
-
-# Route Table
+# Route Table (no IGW dependency)
 resource "aws_route_table" "public" {
   vpc_id = var.vpc_id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
 
   tags = {
     Name = "public-route-table-${random_string.suffix.result}"
