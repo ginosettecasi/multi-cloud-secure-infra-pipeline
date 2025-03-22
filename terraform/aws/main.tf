@@ -108,6 +108,10 @@ resource "aws_security_group" "web_sg" {
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flow-logs"
   retention_in_days = 365
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # IAM Role for Flow Logs
@@ -124,8 +128,13 @@ resource "aws_iam_role" "flow_logs_role" {
       }
     }]
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
+# IAM Policy Attachment
 resource "aws_iam_role_policy_attachment" "flow_logs_policy" {
   role       = aws_iam_role.flow_logs_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
