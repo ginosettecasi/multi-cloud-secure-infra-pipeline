@@ -38,7 +38,7 @@ jobs:
           additional_args: --format sarif --out tfsec.sarif
         continue-on-error: true
 
-              - name: 📦 Upload Snyk Report Json
+      - name: 📦 Upload Snyk Report Json
         uses: actions/upload-artifact@v3
         with:
           name: snyk_report_json
