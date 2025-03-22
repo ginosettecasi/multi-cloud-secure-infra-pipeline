@@ -51,14 +51,14 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 📊 Terraform Plan
-        run: terraform plan -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
+        run: terraform plan -var="trusted_ip=${{ secrets.TRUSTED_IP }}" -var="vpc_id=${{ secrets.EXISTING_VPC_ID }}"
         working-directory: terraform/aws
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 🚀 Terraform Apply
-        run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}"
+        run: terraform apply -auto-approve -var="trusted_ip=${{ secrets.TRUSTED_IP }}" -var="vpc_id=${{ secrets.EXISTING_VPC_ID }}"
         working-directory: terraform/aws
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
