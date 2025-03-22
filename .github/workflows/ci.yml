@@ -39,28 +39,28 @@ jobs:
         continue-on-error: true
 
       - name: 📦 Upload Snyk Report JSON
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         with:
           name: snyk_report_json
           path: snyk.json
         if: always()
 
       - name: 📦 Upload Snyk Report SARIF
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         with:
           name: snyk_report_sarif
           path: snyk.sarif
         if: always()
 
       - name: 📦 Upload Tfsec Report
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         with:
           name: tfsec_report
           path: tfsec.sarif
         if: always()
 
       - name: 📦 Upload Checkov Report
-        uses: actions/upload-artifact@v2.3.1
+        uses: actions/upload-artifact@v3
         with:
           name: checkov_report
           path: checkov.sarif
